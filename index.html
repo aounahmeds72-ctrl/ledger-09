@@ -61,6 +61,22 @@
     
     <h2 class="auth-title" id="auth-title">Sign In</h2>
     <div id="auth-error" class="auth-error"></div>
+    <div class="card" style="margin-bottom:16px;">
+      <h3 class="card-title">Supabase Setup</h3>
+      <p class="card-desc">Enter your project URL and anon key once to get started.</p>
+      <div class="form-group">
+        <label for="auth-supabase-url">Project URL</label>
+        <input type="text" id="auth-supabase-url" placeholder="https://xxxx.supabase.co" />
+      </div>
+      <div class="form-group">
+        <label for="auth-supabase-key">Anon Key</label>
+        <input type="password" id="auth-supabase-key" placeholder="eyJ..." />
+      </div>
+      <div class="form-actions">
+        <button class="btn-outline" id="btn-auth-test-supabase">Test</button>
+        <button class="btn-primary" id="btn-auth-save-supabase">Save & Apply</button>
+      </div>
+    </div>
     <div class="auth-form" id="auth-form"></div>
     <button class="btn-auth-submit" id="btn-auth-submit">Sign In</button>
     <div id="auth-links" class="auth-links"></div>
@@ -196,6 +212,17 @@
               <datalist id="report-accounts-list"></datalist>
             </div>
             <div class="form-group">
+              <label for="report-account-type">Account Type</label>
+              <select id="report-account-type">
+                <option value="all">All Types</option>
+                <option value="asset">Asset</option>
+                <option value="liability">Liability</option>
+                <option value="equity">Equity</option>
+                <option value="income">Income</option>
+                <option value="expense">Expense</option>
+              </select>
+            </div>
+            <div class="form-group">
               <label for="report-from">From Date</label>
               <input type="date" id="report-from" />
             </div>
@@ -206,6 +233,7 @@
           </div>
           <div class="form-actions">
             <button class="btn-primary" id="btn-generate-report">Generate Report</button>
+            <button class="btn-outline" id="btn-generate-trial-balance">Trial Balance</button>
             <button class="btn-outline" id="btn-print-report">Export PDF</button>
           </div>
         </div>
@@ -220,6 +248,23 @@
         </div>
         
         <div class="settings-grid">
+          <div class="card">
+            <h3 class="card-title">Supabase Connection</h3>
+            <p class="card-desc">Update credentials and reconnect without editing code.</p>
+            <div class="form-group">
+              <label for="settings-supabase-url">Project URL</label>
+              <input type="text" id="settings-supabase-url" placeholder="https://xxxx.supabase.co" />
+            </div>
+            <div class="form-group">
+              <label for="settings-supabase-key">Anon Key</label>
+              <input type="password" id="settings-supabase-key" placeholder="eyJ..." />
+            </div>
+            <div class="form-actions">
+              <button class="btn-outline" id="btn-test-supabase">Test</button>
+              <button class="btn-primary" id="btn-save-supabase">Save & Apply</button>
+            </div>
+          </div>
+
           <div class="card">
             <h3 class="card-title">Change Password</h3>
             <p class="card-desc">Update your account password.</p>
@@ -278,6 +323,16 @@
         <label for="acc-opening">Opening Balance</label>
         <input type="number" id="acc-opening" placeholder="0.00" step="0.01" />
       </div>
+      <div class="form-group">
+        <label for="acc-type">Account Type <span class="req">*</span></label>
+        <select id="acc-type">
+          <option value="asset">Asset</option>
+          <option value="liability">Liability</option>
+          <option value="equity">Equity</option>
+          <option value="income">Income</option>
+          <option value="expense">Expense</option>
+        </select>
+      </div>
     </div>
     <div class="modal-ft">
       <button class="btn-outline" data-modal="modal-account">Cancel</button>
@@ -325,7 +380,8 @@
     </div>
     <div class="modal-ft">
       <button class="btn-outline" data-modal="modal-voucher">Cancel</button>
-      <button class="btn-primary" id="btn-save-voucher">Post Voucher</button>
+      <button class="btn-outline" id="btn-save-draft-voucher">Save as Draft</button>
+      <button class="btn-primary" id="btn-post-voucher">Post Voucher</button>
     </div>
   </div>
   
@@ -374,7 +430,7 @@
     </div>
     <div class="modal-ft">
       <button class="btn-outline" data-modal="modal-entry">Cancel</button>
-      <button class="btn-primary" id="btn-save-entry">Add Entry</button>
+      <button class="btn-primary" id="btn-save-entry">Save Entry</button>
     </div>
   </div>
   
