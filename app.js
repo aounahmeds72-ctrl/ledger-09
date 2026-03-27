@@ -1,5 +1,5 @@
-let supabaseUrl = window.__SUPABASE_URL || localStorage.getItem('https://hubcmldbztdsxxqsoebo.supabase.co') || '';
-let supabaseAnonKey = window.__SUPABASE_ANON_KEY || localStorage.getItem('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh1YmNtbGRienRkc3h4cXNvZWJvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2MzA2MTcsImV4cCI6MjA5MDIwNjYxN30.jevxOC3NeKqM16MUCcpy4NznWH8DausdYcjyHsJcuu8') || '';
+let supabaseUrl = window.__SUPABASE_URL || '';
+let supabaseAnonKey = window.__SUPABASE_ANON_KEY || '';
 const CURRENCY_SYMBOL = 'Rs.';
 const PAGE_SIZE = 20;
 const PINNED_ACCOUNTS_KEY = 'ledger_pinned_accounts';
@@ -7,6 +7,7 @@ const PINNED_ACCOUNTS_KEY = 'ledger_pinned_accounts';
 let supabaseClient = null;
 let currentUser = null;
 let confirmCallback = null;
+let supportsAccountTypeColumn = true;
 
 const appState = {
   currentTab: 'dashboard',
@@ -76,12 +77,13 @@ function togglePin(accountId) {
 
 async function initSupabase() {
   if (!supabaseUrl || !supabaseAnonKey || supabaseUrl.includes('your-project.supabase.co')) {
-    showToast('Configure Supabase URL/key in Supabase Setup', 'error');
+    showToast('Supabase is not configured for this build', 'error');
     showAuthScreen();
     return;
   }
   const { createClient } = window.supabase;
   supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+  await detectSchemaCapabilities();
 
   supabaseClient.auth.onAuthStateChange((event, session) => {
     currentUser = session?.user || null;
@@ -108,72 +110,16 @@ async function initSupabase() {
   }
 }
 
-function getSupabaseConfig() {
-  return { url: supabaseUrl || '', key: supabaseAnonKey || '' };
-}
-
-function setSupabaseConfig(url, key) {
-  supabaseUrl = (url || '').trim();
-  supabaseAnonKey = (key || '').trim();
-  localStorage.setItem('SUPABASE_URL', supabaseUrl);
-  localStorage.setItem('SUPABASE_ANON_KEY', supabaseAnonKey);
-}
-
-function syncSupabaseConfigInputs() {
-  const { url, key } = getSupabaseConfig();
-  const ids = [
-    ['auth-supabase-url', url],
-    ['auth-supabase-key', key],
-    ['settings-supabase-url', url],
-    ['settings-supabase-key', key],
-  ];
-  ids.forEach(([id, value]) => {
-    const el = document.getElementById(id);
-    if (el) el.value = value;
-  });
-}
-
-async function testSupabaseConnection(url, key) {
-  if (!url || !key) throw new Error('Supabase URL and key are required');
-  const { createClient } = window.supabase;
-  const testClient = createClient(url, key);
-  const { error } = await testClient.auth.getSession();
-  if (error) throw error;
-  return true;
-}
-
-async function saveAndApplySupabaseConfig(source) {
-  const urlInput = document.getElementById(source === 'auth' ? 'auth-supabase-url' : 'settings-supabase-url');
-  const keyInput = document.getElementById(source === 'auth' ? 'auth-supabase-key' : 'settings-supabase-key');
-  const btn = document.getElementById(source === 'auth' ? 'btn-auth-save-supabase' : 'btn-save-supabase');
-  setButtonLoading(btn, true);
+async function detectSchemaCapabilities() {
+  supportsAccountTypeColumn = true;
   try {
-    const url = urlInput?.value?.trim();
-    const key = keyInput?.value?.trim();
-    await testSupabaseConnection(url, key);
-    setSupabaseConfig(url, key);
-    syncSupabaseConfigInputs();
-    await initSupabase();
-    showToast('Supabase config saved and applied');
-  } catch (err) {
-    showToast(err.message || 'Failed to apply Supabase config', 'error');
-  } finally {
-    setButtonLoading(btn, false);
-  }
-}
-
-async function testSupabaseConfigOnly(source) {
-  const urlInput = document.getElementById(source === 'auth' ? 'auth-supabase-url' : 'settings-supabase-url');
-  const keyInput = document.getElementById(source === 'auth' ? 'auth-supabase-key' : 'settings-supabase-key');
-  const btn = document.getElementById(source === 'auth' ? 'btn-auth-test-supabase' : 'btn-test-supabase');
-  setButtonLoading(btn, true);
-  try {
-    await testSupabaseConnection(urlInput?.value?.trim(), keyInput?.value?.trim());
-    showToast('Supabase connection looks good');
-  } catch (err) {
-    showToast(err.message || 'Connection test failed', 'error');
-  } finally {
-    setButtonLoading(btn, false);
+    const { error } = await supabaseClient.from('accounts').select('id,type').limit(1);
+    if (error && String(error.message || '').toLowerCase().includes("could not find the 'type' column")) {
+      supportsAccountTypeColumn = false;
+      showToast("Database missing accounts.type. Using compatibility mode.", 'warning');
+    }
+  } catch {
+    supportsAccountTypeColumn = false;
   }
 }
 
@@ -282,7 +228,10 @@ async function getAccount(id) {
 
 async function saveAccount(name, openingBalance, accountType, id = null) {
   if (!name.trim()) throw new Error('Account name required');
-  const record = { user_id: currentUser.id, name: name.trim(), opening_balance: parseFloat(openingBalance) || 0, type: accountType || 'asset', updated_at: new Date().toISOString() };
+  const record = { user_id: currentUser.id, name: name.trim(), opening_balance: parseFloat(openingBalance) || 0, updated_at: new Date().toISOString() };
+  if (supportsAccountTypeColumn) {
+    record.type = accountType || 'asset';
+  }
   if (id) {
     const { error } = await supabaseClient.from('accounts').update(record).eq('id', id).eq('user_id', currentUser.id);
     if (error) throw error;
@@ -456,7 +405,6 @@ async function renderReports() {
 
 function renderSettings() {
   appState.currentTab = 'settings';
-  syncSupabaseConfigInputs();
 }
 
 function openModal(modalId) {
@@ -779,10 +727,6 @@ function setupModals() {
   document.getElementById('btn-generate-trial-balance').addEventListener('click', generateTrialBalance);
   document.getElementById('btn-print-report').addEventListener('click', exportPDF);
   document.getElementById('btn-change-password').addEventListener('click', changePassword);
-  document.getElementById('btn-save-supabase').addEventListener('click', () => saveAndApplySupabaseConfig('settings'));
-  document.getElementById('btn-test-supabase').addEventListener('click', () => testSupabaseConfigOnly('settings'));
-  document.getElementById('btn-auth-save-supabase').addEventListener('click', () => saveAndApplySupabaseConfig('auth'));
-  document.getElementById('btn-auth-test-supabase').addEventListener('click', () => testSupabaseConfigOnly('auth'));
   document.getElementById('btn-logout').addEventListener('click', logout);
   document.getElementById('btn-logout-top').addEventListener('click', logout);
   document.getElementById('btn-logout-settings').addEventListener('click', logout);
@@ -839,7 +783,6 @@ function setupKeyboardShortcuts() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  syncSupabaseConfigInputs();
   setupNav();
   setupModals();
   setupSearch();

@@ -61,22 +61,6 @@
     
     <h2 class="auth-title" id="auth-title">Sign In</h2>
     <div id="auth-error" class="auth-error"></div>
-    <div class="card" style="margin-bottom:16px;">
-      <h3 class="card-title">Supabase Setup</h3>
-      <p class="card-desc">Enter your project URL and anon key once to get started.</p>
-      <div class="form-group">
-        <label for="auth-supabase-url">Project URL</label>
-        <input type="text" id="auth-supabase-url" placeholder="https://xxxx.supabase.co" />
-      </div>
-      <div class="form-group">
-        <label for="auth-supabase-key">Anon Key</label>
-        <input type="password" id="auth-supabase-key" placeholder="eyJ..." />
-      </div>
-      <div class="form-actions">
-        <button class="btn-outline" id="btn-auth-test-supabase">Test</button>
-        <button class="btn-primary" id="btn-auth-save-supabase">Save & Apply</button>
-      </div>
-    </div>
     <div class="auth-form" id="auth-form"></div>
     <button class="btn-auth-submit" id="btn-auth-submit">Sign In</button>
     <div id="auth-links" class="auth-links"></div>
@@ -248,23 +232,6 @@
         </div>
         
         <div class="settings-grid">
-          <div class="card">
-            <h3 class="card-title">Supabase Connection</h3>
-            <p class="card-desc">Update credentials and reconnect without editing code.</p>
-            <div class="form-group">
-              <label for="settings-supabase-url">Project URL</label>
-              <input type="text" id="settings-supabase-url" placeholder="https://xxxx.supabase.co" />
-            </div>
-            <div class="form-group">
-              <label for="settings-supabase-key">Anon Key</label>
-              <input type="password" id="settings-supabase-key" placeholder="eyJ..." />
-            </div>
-            <div class="form-actions">
-              <button class="btn-outline" id="btn-test-supabase">Test</button>
-              <button class="btn-primary" id="btn-save-supabase">Save & Apply</button>
-            </div>
-          </div>
-
           <div class="card">
             <h3 class="card-title">Change Password</h3>
             <p class="card-desc">Update your account password.</p>
@@ -452,6 +419,12 @@
 
 <!-- TOAST NOTIFICATION -->
 <div id="toast" class="toast hidden"></div>
+
+<!-- Supabase runtime config (paste once) -->
+<script>
+  window.__SUPABASE_URL = "https://YOUR_PROJECT.supabase.co";
+  window.__SUPABASE_ANON_KEY = "YOUR_ANON_KEY";
+</script>
 
 <!-- Load Application -->
 <script src="app.js"></script>
